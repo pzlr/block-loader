@@ -1,6 +1,6 @@
 {
   "name": "@pzlr/block-loader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Block loader for webpack",
   "main": "index.js",
   "repository": {
