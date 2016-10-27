@@ -1,4 +1,5 @@
 const
+	path = require('path'),
 	fs = require('fs'),
 	core = require('@pzlr/build-core'),
 	Sugar = require('sugar');
@@ -11,7 +12,7 @@ const preferences = {
 
 function include(dir, name, ext) {
 	try {
-		if (true || fs.statSync(path.join(dir, name + ext)).isFile()) {
+		if (fs.statSync(path.join(dir, name + ext)).isFile()) {
 			return `require('./${name + ext}');`;
 		}
 
@@ -22,6 +23,7 @@ function include(dir, name, ext) {
 
 module.exports = function (source) {
 	this.cacheable && this.cacheable();
+
 	const
 		query = Sugar.Object.fromQueryString(this.query || ''),
 		type = core.config.projectType || query.projectType || 'ts',
@@ -33,7 +35,7 @@ module.exports = function (source) {
 		return source;
 	}
 
-	// this.addContextDependency(this.context);
+	this.addContextDependency(this.context);
 
 	const {name, parent, dependencies} = declaration;
 
@@ -49,8 +51,3 @@ module.exports = function (source) {
 
 	return res;
 };
-
-
-console.log(module.exports(`package('p-main')
-	.extends('i-page')
-	.dependencies('b-retailer', 'b-item', 'b-item-card', 'b-city-chooser', 'b-button', 'b-map');`));

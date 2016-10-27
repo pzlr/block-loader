@@ -15,7 +15,7 @@
     "eslint-plugin-flowtype": "^2.25.0"
   },
   "dependencies": {
-    "@pzlr/build-core": "^0.2.0",
+    "@pzlr/build-core": "^0.2.1",
     "sugar": "^2.0.1"
   }
 }
