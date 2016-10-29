@@ -8,12 +8,12 @@
     "url": "git@github.com:pzlr/block-loader.git",
     "type": "git"
   },
-  "devDependencies": {
-    "babel-eslint": "^7.0.0",
-    "eslint": "^3.8.1"
-  },
   "dependencies": {
     "@pzlr/build-core": "^0.2.1",
     "sugar": "^2.0.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^7.0.0",
+    "eslint": "^3.8.1"
   }
 }
