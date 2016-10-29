@@ -1,13 +1,25 @@
 {
   "name": "@pzlr/block-loader",
+  "description": "WebPack block loader for pzlr",
+  "homepage": "https://github.com/pzlr/block-loader#readme",
   "main": "index.js",
   "version": "0.1.2",
   "license": "MIT",
-  "author": "Konstantin Kutsyllo <trikadin@mail.ru>",
+  "author": {
+    "name": "Konstantin Kutsyllo",
+    "email": "trikadin@mail.ru",
+    "url": "https://github.com/trikadin"
+  },
   "repository": {
     "url": "git@github.com:pzlr/block-loader.git",
     "type": "git"
   },
+  "bugs": {
+    "url": "https://github.com/pzlr/block-loader/issues"
+  },
+  "keywords": [
+    "pzlr"
+  ],
   "dependencies": {
     "@pzlr/build-core": "^0.2.1",
     "sugar": "^2.0.1"
