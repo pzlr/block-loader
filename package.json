@@ -1,18 +1,16 @@
 {
   "name": "@pzlr/block-loader",
-  "version": "0.1.1",
-  "description": "Block loader for webpack",
   "main": "index.js",
+  "version": "0.1.2",
+  "license": "MIT",
+  "author": "Konstantin Kutsyllo <trikadin@mail.ru>",
   "repository": {
     "url": "git@github.com:pzlr/block-loader.git",
     "type": "git"
   },
-  "author": "Konstantin Kutsyllo <trikadin@mail.ru>",
-  "license": "MIT",
   "devDependencies": {
     "babel-eslint": "^7.0.0",
-    "eslint": "^3.8.1",
-    "eslint-plugin-flowtype": "^2.25.0"
+    "eslint": "^3.8.1"
   },
   "dependencies": {
     "@pzlr/build-core": "^0.2.1",

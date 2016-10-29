@@ -1,3 +1,5 @@
+'use strict';
+
 const
 	path = require('path'),
 	fs = require('fs'),
@@ -10,7 +12,25 @@ const preferences = {
 	js: ['.ess', '.ss', '.styl', '.js']
 };
 
-function include(dir, name, ext) {
+const scripts = {
+	'.ts': true,
+	'.js': true
+};
+
+/**
+ * Returns include declaration for the specified package
+ *
+ * @param {string} dir - source directory
+ * @param {string} name - package name
+ * @param {string} ext - file extension
+ * @param {string} type - package type
+ * @returns {string}
+ */
+function include(dir, name, ext, type) {
+	if (!scripts[ext] && type === 'interface') {
+		return '';
+	}
+
 	try {
 		if (fs.statSync(path.join(dir, name + ext)).isFile()) {
 			return `require('./${name + ext}');`;
@@ -21,15 +41,18 @@ function include(dir, name, ext) {
 	return '';
 }
 
+/**
+ * @param source
+ * @returns {string}
+ */
 module.exports = function (source) {
 	this.cacheable && this.cacheable();
 
 	const
 		query = Sugar.Object.fromQueryString(this.query || ''),
-		type = core.config.projectType || query.projectType || 'ts',
-		fileExts = query.exts || preferences[type];
-
-	const declaration = core.declaration.parse(source, true);
+		projectType = core.config.projectType || query.projectType || 'ts',
+		fileExts = query.exts || preferences[projectType],
+		declaration = core.declaration.parse(source, true);
 
 	if (!declaration) {
 		return source;
@@ -37,17 +60,13 @@ module.exports = function (source) {
 
 	this.addContextDependency(this.context);
 
-	const {name, parent, dependencies} = declaration;
+	const
+		{name, type, parent, dependencies} = declaration;
 
-	let res = '';
-
-	if (parent) {
-		res += `require('${core.resolve.block(parent)}');\n`;
-	}
-
+	let res = parent ? `require('${core.resolve.block(parent)}');\n` : '';
 	res += dependencies.map((dep) => `require('${core.resolve.block(dep)}');`).join('\n');
 	res += '\n';
-	res += fileExts.map((ext) => include(this.context, name, ext)).join('\n');
+	res += fileExts.map((ext) => include(this.context, name, ext, type)).join('\n');
 
 	return res;
 };
