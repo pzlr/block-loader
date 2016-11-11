@@ -44,6 +44,7 @@ function include(dir, name, ext, type) {
 /**
  * Returns escaped path
  * @param {string} path
+ * @returns {string}
  */
 function escapePath(path) {
 	return JSON.stringify(path).slice(1, -1);
