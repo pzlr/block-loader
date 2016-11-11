@@ -42,6 +42,14 @@ function include(dir, name, ext, type) {
 }
 
 /**
+ * Returns escaped path
+ * @param {string} path
+ */
+function escapePath(path) {
+	return JSON.stringify(path).slice(1, -1);
+}
+
+/**
  * @param source
  * @returns {string}
  */
@@ -49,8 +57,8 @@ module.exports = function (source) {
 	this.cacheable && this.cacheable();
 
 	const
-		query = Sugar.Object.fromQueryString(this.query || ''),
-		projectType = core.config.projectType || query.projectType || 'ts',
+		query = Sugar.Object.fromQueryString(this.query),
+		projectType = query.projectType || core.config.projectType,
 		fileExts = query.exts || preferences[projectType],
 		declaration = core.declaration.parse(source, true);
 
@@ -63,8 +71,8 @@ module.exports = function (source) {
 	const
 		{name, type, parent, dependencies} = declaration;
 
-	let res = parent ? `require('${core.resolve.block(parent)}');\n` : '';
-	res += dependencies.map((dep) => `require('${core.resolve.block(dep)}');`).join('\n');
+	let res = parent ? `require('${escapePath(core.resolve.block(parent))}');\n` : '';
+	res += dependencies.map((dep) => `require('${escapePath(core.resolve.block(dep))}');`).join('\n');
 	res += '\n';
 	res += fileExts.map((ext) => include(this.context, name, ext, type)).join('\n');
 
