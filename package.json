@@ -3,7 +3,7 @@
   "description": "WebPack block loader for pzlr",
   "homepage": "https://github.com/pzlr/block-loader#readme",
   "main": "index.js",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "author": {
     "name": "Konstantin Kutsyllo",
@@ -21,7 +21,7 @@
     "pzlr"
   ],
   "dependencies": {
-    "@pzlr/build-core": "^0.2.4",
+    "@pzlr/build-core": "^0.3.0",
     "sugar": "^2.0.1"
   },
   "devDependencies": {
