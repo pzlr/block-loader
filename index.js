@@ -43,6 +43,8 @@ function include(dir, name, ext, type) {
 
 /**
  * Returns escaped path
+ * (fix for windows)
+ *
  * @param {string} path
  * @returns {string}
  */
@@ -72,8 +74,8 @@ module.exports = function (source) {
 	const
 		{name, type, parent, dependencies} = declaration;
 
-	let res = parent ? `require('${escapePath(core.resolve.block(parent))}');\n` : '';
-	res += dependencies.map((dep) => `require('${escapePath(core.resolve.block(dep))}');`).join('\n');
+	let res = parent ? `require('${escapePath(core.resolve.block(parent, name))}');\n` : '';
+	res += dependencies.map((dep) => `require('${escapePath(core.resolve.block(dep, name))}');`).join('\n');
 	res += '\n';
 	res += fileExts.map((ext) => include(this.context, name, ext, type)).join('\n');
 
