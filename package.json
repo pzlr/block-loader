@@ -21,7 +21,7 @@
     "pzlr"
   ],
   "dependencies": {
-    "@pzlr/build-core": "^0.3.0",
+    "@pzlr/build-core": "^0.4.0",
     "sugar": "^2.0.1"
   },
   "devDependencies": {
