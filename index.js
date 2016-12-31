@@ -72,10 +72,11 @@ module.exports = function (source) {
 	this.addContextDependency(this.context);
 
 	const
-		{name, type, parent, dependencies} = declaration;
+		{name, type, parent, dependencies, libs} = declaration;
 
 	let res = parent ? `require('${escapePath(core.resolve.block(parent, name))}');\n` : '';
 	res += dependencies.map((dep) => `require('${escapePath(core.resolve.block(dep, name))}');`).join('\n');
+	res += libs.map((lib) => `require('${escapePath(lib)}');`).join('\n');
 	res += '\n';
 	res += fileExts.map((ext) => include(this.context, name, ext, type)).join('\n');
 
