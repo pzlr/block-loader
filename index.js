@@ -2,9 +2,9 @@
 
 const
 	path = require('path'),
-	fs = require('fs'),
+	fs = require('fs-extra-promise'),
 	core = require('@pzlr/build-core'),
-	Sugar = require('sugar');
+	loaderUtils = require('loader-utils');
 
 const preferences = {
 	static: ['.ess', '.styl'],
@@ -26,13 +26,13 @@ const scripts = {
  * @param {string} type - package type
  * @returns {string}
  */
-function include(dir, name, ext, type) {
+async function include(dir, name, ext, type) {
 	if (!scripts[ext] && type === 'interface') {
 		return '';
 	}
 
 	try {
-		if (fs.statSync(path.join(dir, name + ext)).isFile()) {
+		if ((await fs.statAsync(path.join(dir, name + ext))).isFile()) {
 			return `require('./${name + ext}');`;
 		}
 
@@ -56,13 +56,12 @@ function escapePath(path) {
  * @param source
  * @returns {string}
  */
-module.exports = function (source) {
-	this.cacheable && this.cacheable();
-
+async function main(source) {
 	const
-		query = Sugar.Object.fromQueryString(this.query),
+		query = loaderUtils.getOptions(this),
 		projectType = query.projectType || core.config.projectType,
 		fileExts = query.exts || preferences[projectType],
+		requireLibs = 'libs' in query ? query.libs : true,
 		declaration = core.declaration.parse(source, true);
 
 	if (!declaration) {
@@ -75,10 +74,36 @@ module.exports = function (source) {
 		{name, type, parent, dependencies, libs} = declaration;
 
 	let res = parent ? `require('${escapePath(core.resolve.block(parent, name))}');\n` : '';
-	res += dependencies.map((dep) => `require('${escapePath(core.resolve.block(dep, name))}');`).join('\n');
-	res += libs.map((lib) => `require('${escapePath(lib)}');`).join('\n');
+	res += dependencies
+		.map((dep) => `require('${escapePath(core.resolve.block(dep, name))}');`)
+		.join('\n');
+
+	if (requireLibs) {
+		res += libs.map((lib) => `require('${escapePath(lib)}');`).join('\n');
+	}
+
 	res += '\n';
-	res += fileExts.map((ext) => include(this.context, name, ext, type)).join('\n');
+
+	const fileDeps = await $C(fileExts).async.reduce(
+		(res, ext, i, data, o) => {
+			o.wait(async () => {
+				res[i] = await include(this.context, name, ext, type);
+			});
+
+			return res;
+		},
+
+		[]
+	);
+	res += fileDeps.join('\n');
 
 	return res;
+}
+
+module.exports = function (...args) {
+	const callback = this.async();
+
+	main
+		.call(this, ...args)
+		.then((v) => callback(null, v), callback);
 };
