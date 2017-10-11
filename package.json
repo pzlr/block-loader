@@ -21,7 +21,7 @@
     "pzlr"
   ],
   "dependencies": {
-    "@pzlr/build-core": "^0.4.0",
+    "@pzlr/build-core": "^1.3.0",
     "collection.js": "^6.1.6",
     "fs-extra-promise": "^1.0.1",
     "loader-utils": "^1.1.0"
