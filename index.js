@@ -2,8 +2,8 @@
 
 const
 	path = require('path'),
-	fs = require('fs-extra-promise'),
 	core = require('@pzlr/build-core'),
+	e = require('sugar').RegExp.escape,
 	loaderUtils = require('loader-utils');
 
 const preferences = {
@@ -18,30 +18,6 @@ const scripts = {
 };
 
 /**
- * Returns include declaration for the specified package
- *
- * @param {string} dir - source directory
- * @param {string} name - package name
- * @param {string} ext - file extension
- * @param {string} type - package type
- * @returns {string}
- */
-async function include(dir, name, ext, type) {
-	if (!scripts[ext] && type === 'interface') {
-		return '';
-	}
-
-	try {
-		if ((await fs.statAsync(path.join(dir, name + ext))).isFile()) {
-			return `require('./${name + ext}');`;
-		}
-
-	} catch (ignore) {}
-
-	return '';
-}
-
-/**
  * Returns escaped path
  * (fix for windows)
  *
@@ -53,13 +29,43 @@ function escapePath(path) {
 }
 
 /**
+ * Imports all files from a directory by the specified pattern
+ *
+ * @param {string} dir
+ * @param {string} pattern
+ * @returns {string}
+ */
+function importAll(dir, pattern) {
+	return `
+(function (r) { 
+	var arr = r.keys(); 
+	for (var i = 0; i < arr.length; i++) { 
+		r(arr[i]);
+	}
+})(require.context('${dir}', false, /${pattern}/));`;
+}
+
+/**
  * @param source
  * @returns {string}
  */
-async function main(source) {
+module.exports = function (source) {
+	/**
+	 * @type {{
+	 *   projectType?: string,
+	 *   blockDir?: string,
+	 *   exts?: Array<string>,
+	 *   libs?: boolean,
+	 *   abstractRequire?: boolean
+	 * }}
+	 */
+	const query = loaderUtils.getOptions(this) || {};
+
 	const
-		query = loaderUtils.getOptions(this),
 		projectType = query.projectType || core.config.projectType,
+		blockDir = query.blockDir || core.config.blockDir;
+
+	const
 		fileExts = query.exts || preferences[projectType],
 		requireLibs = 'libs' in query ? query.libs : true,
 		declaration = core.declaration.parse(source, true);
@@ -73,9 +79,17 @@ async function main(source) {
 	const
 		{name, type, parent, dependencies, libs} = declaration;
 
-	let res = parent ? `require('${escapePath(core.resolve.block(parent, name))}');\n` : '';
+	function resolve(dep, name) {
+		return escapePath(
+			query.abstractRequire ? path.join(blockDir, dep) : core.resolve.block(dep, name)
+		);
+	}
+
+	let res = parent ?
+		`require('${resolve(parent, name)}');\n` : '';
+
 	res += dependencies
-		.map((dep) => `require('${escapePath(core.resolve.block(dep, name))}');`)
+		.map((dep) => `require('${resolve(dep, name)}');`)
 		.join('\n');
 
 	if (requireLibs) {
@@ -84,26 +98,16 @@ async function main(source) {
 
 	res += '\n';
 
-	const fileDeps = await $C(fileExts).async.reduce(
-		(res, ext, i, data, o) => {
-			o.wait(async () => {
-				res[i] = await include(this.context, name, ext, type);
-			});
+	const
+		validExt = fileExts.filter((ext) => scripts[ext] || type !== 'interface').map((ext) => e(ext)),
+		r = `${e(path.basename(name))}(${validExt.join('|')})`;
 
-			return res;
-		},
+	if (query.abstractRequire) {
+		res += importAll(path.join(blockDir, name), r);
 
-		[]
-	);
-	res += fileDeps.join('\n');
+	} else {
+		res += importAll('./', r);
+	}
 
 	return res;
-}
-
-module.exports = function (...args) {
-	const callback = this.async();
-
-	main
-		.call(this, ...args)
-		.then((v) => callback(null, v), callback);
 };
