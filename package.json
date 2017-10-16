@@ -21,7 +21,7 @@
     "pzlr"
   ],
   "dependencies": {
-    "@pzlr/build-core": "^1.4.0",
+    "@pzlr/build-core": "^1.5.0",
     "loader-utils": "^1.1.0"
   },
   "devDependencies": {
