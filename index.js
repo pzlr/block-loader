@@ -35,7 +35,6 @@ module.exports = function (source) {
 	/**
 	 * @type {{
 	 *   projectType?: string,
-	 *   blockDir?: string,
 	 *   exts?: Array<string>,
 	 *   libs?: boolean
 	 * }}
