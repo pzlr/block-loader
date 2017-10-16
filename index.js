@@ -3,7 +3,6 @@
 const
 	path = require('path'),
 	core = require('@pzlr/build-core'),
-	e = require('sugar').RegExp.escape,
 	loaderUtils = require('loader-utils');
 
 const preferences = {
@@ -29,23 +28,6 @@ function escapePath(path) {
 }
 
 /**
- * Imports all files from a directory by the specified pattern
- *
- * @param {string} dir
- * @param {string} pattern
- * @returns {string}
- */
-function importAll(dir, pattern) {
-	return `
-(function (r) { 
-	var arr = r.keys(); 
-	for (var i = 0; i < arr.length; i++) { 
-		r(arr[i]);
-	}
-})(require.context('${dir}', false, /${pattern}/));`;
-}
-
-/**
  * @param source
  * @returns {string}
  */
@@ -55,17 +37,13 @@ module.exports = function (source) {
 	 *   projectType?: string,
 	 *   blockDir?: string,
 	 *   exts?: Array<string>,
-	 *   libs?: boolean,
-	 *   abstractRequire?: boolean
+	 *   libs?: boolean
 	 * }}
 	 */
 	const query = loaderUtils.getOptions(this) || {};
 
 	const
 		projectType = query.projectType || core.config.projectType,
-		blockDir = query.blockDir || core.config.blockDir;
-
-	const
 		fileExts = query.exts || preferences[projectType],
 		requireLibs = 'libs' in query ? query.libs : true,
 		declaration = core.declaration.parse(source, true);
@@ -79,17 +57,11 @@ module.exports = function (source) {
 	const
 		{name, type, parent, dependencies, libs} = declaration;
 
-	function resolve(dep, name) {
-		return escapePath(
-			query.abstractRequire ? path.join(blockDir, dep) : core.resolve.block(dep, name)
-		);
-	}
-
 	let res = parent ?
-		`require('${resolve(parent, name)}');\n` : '';
+		`require('${core.resolve.block(parent)}');\n` : '';
 
 	res += dependencies
-		.map((dep) => `require('${resolve(dep, name)}');`)
+		.map((dep) => `require('${core.resolve.block(dep, name)}');`)
 		.join('\n');
 
 	if (requireLibs) {
@@ -97,17 +69,16 @@ module.exports = function (source) {
 	}
 
 	res += '\n';
+	fileExts.forEach((ext) => {
+		if (scripts[ext] || type !== 'interface') {
+			const
+				file = core.resolve.block(path.join(name, path.basename(name) + ext));
 
-	const
-		validExt = fileExts.filter((ext) => scripts[ext] || type !== 'interface').map((ext) => e(ext)),
-		r = `${e(path.basename(name))}(${validExt.join('|')})`;
-
-	if (query.abstractRequire) {
-		res += importAll(path.join(blockDir, name), r);
-
-	} else {
-		res += importAll('./', r);
-	}
+			if (file) {
+				res += `require('${file}');\n`;
+			}
+		}
+	});
 
 	return res;
 };
