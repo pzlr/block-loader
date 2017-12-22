@@ -1,6 +1,7 @@
 'use strict';
 
 const
+	$C = require('collection.js'),
 	path = require('path'),
 	core = require('@pzlr/build-core'),
 	loaderUtils = require('loader-utils');
@@ -31,7 +32,10 @@ function escapePath(path) {
  * @param source
  * @returns {string}
  */
-module.exports = function (source) {
+module.exports = async function (source) {
+	const
+		cb = this.async();
+
 	/**
 	 * @type {{
 	 *   projectType?: string,
@@ -56,28 +60,39 @@ module.exports = function (source) {
 	const
 		{name, type, parent, dependencies, libs} = declaration;
 
-	let res = parent ?
-		`require('${core.resolve.block(parent)}');\n` : '';
+	try {
+		let res = parent ?
+			`require('${await core.resolve.block(parent)}');\n` : '';
 
-	res += dependencies
-		.map((dep) => `require('${core.resolve.block(dep, name)}');`)
-		.join('\n');
+		res += (
+			await $C(dependencies)
+				.parallel()
+				.map(async (dep) => `require('${await core.resolve.block(dep, name)}');`)
 
-	if (requireLibs) {
-		res += libs.map((lib) => `require('${escapePath(lib)}');`).join('\n');
-	}
+		).join('\n');
 
-	res += '\n';
-	fileExts.forEach((ext) => {
-		if (scripts[ext] || type !== 'interface') {
-			const
-				file = core.resolve.block(path.join(name, path.basename(name) + ext));
-
-			if (file) {
-				res += `require('${file}');\n`;
-			}
+		if (requireLibs) {
+			res += libs.map((lib) => `require('${escapePath(lib)}');`)
+				.join('\n');
 		}
-	});
 
-	return res;
+		res += '\n';
+		await $C(fileExts)
+			.parallel()
+			.forEach(async (ext) => {
+				if (scripts[ext] || type !== 'interface') {
+					const
+						file = await core.resolve.block(path.join(name, path.basename(name) + ext));
+
+					if (file) {
+						res += `require('${file}');\n`;
+					}
+				}
+			});
+
+		cb(null, res);
+
+	} catch (err) {
+		cb(err);
+	}
 };
